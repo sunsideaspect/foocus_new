@@ -275,13 +275,16 @@ See the common problems [here](troubleshoot.md).
 
 Given different goals, the default models and configs of Fooocus are different:
 
-| Task      | Windows | Linux args | Main Model                  | Refiner | Config                                                                         |
-|-----------| --- | --- |-----------------------------| --- |--------------------------------------------------------------------------------|
-| General   | run.bat |  | juggernautXL_v8Rundiffusion | not used | [here](https://github.com/lllyasviel/Fooocus/blob/main/presets/default.json)   |
-| Realistic | run_realistic.bat | --preset realistic | realisticStockPhoto_v20     | not used | [here](https://github.com/lllyasviel/Fooocus/blob/main/presets/realistic.json) |
-| Anime     | run_anime.bat | --preset anime | animaPencilXL_v500          | not used | [here](https://github.com/lllyasviel/Fooocus/blob/main/presets/anime.json)     |
+| Task      | Windows | Linux args | Main Model                  | Refiner | Config |
+|-----------| --- | --- |-----------------------------| --- |---|
+| General   | run.bat |  | juggernautXL_v8Rundiffusion | not used | [presets/default.json](./presets/default.json) |
+| Realistic | run_realistic.bat | --preset realistic | realisticStockPhoto_v20     | not used | [presets/realistic.json](./presets/realistic.json) |
+| Realistic + Identity |  | --preset realistic_identity | realisticStockPhoto_v20 | not used | [presets/realistic_identity.json](./presets/realistic_identity.json) |
+| Anime     | run_anime.bat | --preset anime | animaPencilXL_v500          | not used | [presets/anime.json](./presets/anime.json) |
 
 Note that the download is **automatic** - you do not need to do anything if the internet connection is okay. However, you can download them manually if you (or move them from somewhere else) have your own preparation.
+
+For this fork's realism-first setup and face-preservation workflow, see [REALISM_TUNING.md](./REALISM_TUNING.md).
 
 ## UI Access and Authentication
 In addition to running on localhost, Fooocus can also expose its UI in two ways: 

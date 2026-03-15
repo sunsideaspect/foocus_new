@@ -6,7 +6,7 @@
         [
             true,
             "SDXL_FILM_PHOTOGRAPHY_STYLE_V1.safetensors",
-            0.2
+            0.15
         ],
         [
             true,
@@ -41,7 +41,16 @@
         "Fooocus Negative"
     ],
     "default_aspect_ratio": "896*1152",
-    "default_overwrite_step": 56,
+    "default_overwrite_step": 60,
+    "default_image_prompt_checkbox": true,
+    "default_image_prompt_advanced_checkbox": true,
+    "default_selected_image_input_tab_id": "ip_tab",
+    "default_ip_type_1": "FaceSwap",
+    "default_ip_stop_at_1": 0.97,
+    "default_ip_weight_1": 1.15,
+    "default_ip_type_2": "ImagePrompt",
+    "default_ip_stop_at_2": 0.6,
+    "default_ip_weight_2": 0.35,
     "checkpoint_downloads": {
         "realisticStockPhoto_v20.safetensors": "https://huggingface.co/lllyasviel/fav_models/resolve/main/fav/realisticStockPhoto_v20.safetensors"
     },
@@ -49,5 +58,7 @@
     "lora_downloads": {
         "SDXL_FILM_PHOTOGRAPHY_STYLE_V1.safetensors": "https://huggingface.co/mashb1t/fav_models/resolve/main/fav/SDXL_FILM_PHOTOGRAPHY_STYLE_V1.safetensors"
     },
-    "previous_default_models": ["realisticStockPhoto_v10.safetensors"]
+    "previous_default_models": [
+        "realisticStockPhoto_v10.safetensors"
+    ]
 }
