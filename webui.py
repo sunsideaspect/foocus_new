@@ -16,7 +16,27 @@ import modules.meta_parser
 import args_manager
 import copy
 import launch
-from extras.inpaint_mask import SAMOptions
+
+try:
+    from extras.inpaint_mask import SAMOptions
+except Exception:
+    # Allow UI startup even if optional mask-generation stack is unavailable.
+    class SAMOptions:  # type: ignore[no-redef]
+        def __init__(self,
+                     dino_prompt='',
+                     dino_box_threshold=0.3,
+                     dino_text_threshold=0.25,
+                     dino_erode_or_dilate=0,
+                     dino_debug=False,
+                     max_detections=2,
+                     model_type='vit_b'):
+            self.dino_prompt = dino_prompt
+            self.dino_box_threshold = dino_box_threshold
+            self.dino_text_threshold = dino_text_threshold
+            self.dino_erode_or_dilate = dino_erode_or_dilate
+            self.dino_debug = dino_debug
+            self.max_detections = max_detections
+            self.model_type = model_type
 
 from modules.sdxl_styles import legal_style_names
 from modules.private_logger import get_current_html_path
@@ -299,7 +319,10 @@ with shared.gradio_root:
                                 generate_mask_button = gr.Button(value='Generate mask from image')
 
                                 def generate_mask(image, mask_model, cloth_category, dino_prompt_text, sam_model, box_threshold, text_threshold, sam_max_detections, dino_erode_or_dilate, dino_debug):
-                                    from extras.inpaint_mask import generate_mask_from_image
+                                    try:
+                                        from extras.inpaint_mask import generate_mask_from_image
+                                    except Exception as e:
+                                        raise gr.Error(f'Mask generation dependencies unavailable: {e}')
 
                                     extras = {}
                                     sam_options = None

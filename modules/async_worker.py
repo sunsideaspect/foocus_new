@@ -1,8 +1,32 @@
 import threading
 
-from extras.inpaint_mask import generate_mask_from_image, SAMOptions
 from modules.patch import PatchSettings, patch_settings, patch_all
 import modules.config
+
+_inpaint_mask_import_error = None
+try:
+    from extras.inpaint_mask import generate_mask_from_image, SAMOptions
+except Exception as e:
+    generate_mask_from_image = None
+    _inpaint_mask_import_error = e
+
+    # Keep startup alive when optional inpaint-mask dependencies are broken.
+    class SAMOptions:  # type: ignore[no-redef]
+        def __init__(self,
+                     dino_prompt='',
+                     dino_box_threshold=0.3,
+                     dino_text_threshold=0.25,
+                     dino_erode_or_dilate=0,
+                     dino_debug=False,
+                     max_detections=2,
+                     model_type='vit_b'):
+            self.dino_prompt = dino_prompt
+            self.dino_box_threshold = dino_box_threshold
+            self.dino_text_threshold = dino_text_threshold
+            self.dino_erode_or_dilate = dino_erode_or_dilate
+            self.dino_debug = dino_debug
+            self.max_detections = max_detections
+            self.model_type = model_type
 
 patch_all()
 
@@ -1368,6 +1392,10 @@ def worker():
                     print(f'[Enhance] Searching for "{enhance_mask_dino_prompt_text}"')
                 elif enhance_mask_model == 'u2net_cloth_seg':
                     extras['cloth_category'] = enhance_mask_cloth_category
+
+                if generate_mask_from_image is None:
+                    print(f'[Enhance] Mask generation unavailable, skipping: {_inpaint_mask_import_error}')
+                    continue
 
                 mask, dino_detection_count, sam_detection_count, sam_detection_on_mask_count = generate_mask_from_image(
                     img, mask_model=enhance_mask_model, extras=extras, sam_options=SAMOptions(
