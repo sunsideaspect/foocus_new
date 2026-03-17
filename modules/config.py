@@ -505,6 +505,48 @@ default_pro_mode_detail_erode_or_dilate = get_config_item_or_set_default(
     validator=lambda x: isinstance(x, int) and -64 <= x <= 64,
     expected_type=int
 )
+default_pro_mode_structure_control_enabled = get_config_item_or_set_default(
+    key='default_pro_mode_structure_control_enabled',
+    default_value=False,
+    validator=lambda x: isinstance(x, bool),
+    expected_type=bool
+)
+default_pro_mode_structure_use_canny = get_config_item_or_set_default(
+    key='default_pro_mode_structure_use_canny',
+    default_value=True,
+    validator=lambda x: isinstance(x, bool),
+    expected_type=bool
+)
+default_pro_mode_structure_use_cpds = get_config_item_or_set_default(
+    key='default_pro_mode_structure_use_cpds',
+    default_value=True,
+    validator=lambda x: isinstance(x, bool),
+    expected_type=bool
+)
+default_pro_mode_structure_canny_stop = get_config_item_or_set_default(
+    key='default_pro_mode_structure_canny_stop',
+    default_value=0.55,
+    validator=lambda x: isinstance(x, numbers.Number) and 0 <= x <= 1,
+    expected_type=numbers.Number
+)
+default_pro_mode_structure_canny_weight = get_config_item_or_set_default(
+    key='default_pro_mode_structure_canny_weight',
+    default_value=0.85,
+    validator=lambda x: isinstance(x, numbers.Number) and 0 <= x <= 2,
+    expected_type=numbers.Number
+)
+default_pro_mode_structure_cpds_stop = get_config_item_or_set_default(
+    key='default_pro_mode_structure_cpds_stop',
+    default_value=0.55,
+    validator=lambda x: isinstance(x, numbers.Number) and 0 <= x <= 1,
+    expected_type=numbers.Number
+)
+default_pro_mode_structure_cpds_weight = get_config_item_or_set_default(
+    key='default_pro_mode_structure_cpds_weight',
+    default_value=0.70,
+    validator=lambda x: isinstance(x, numbers.Number) and 0 <= x <= 2,
+    expected_type=numbers.Number
+)
 checkpoint_downloads = get_config_item_or_set_default(
     key='checkpoint_downloads',
     default_value={},
@@ -803,6 +845,13 @@ possible_preset_keys = {
     "default_pro_mode_detail_strength": "pro_mode_detail_strength",
     "default_pro_mode_detail_respective_field": "pro_mode_detail_respective_field",
     "default_pro_mode_detail_erode_or_dilate": "pro_mode_detail_erode_or_dilate",
+    "default_pro_mode_structure_control_enabled": "pro_mode_structure_control_enabled",
+    "default_pro_mode_structure_use_canny": "pro_mode_structure_use_canny",
+    "default_pro_mode_structure_use_cpds": "pro_mode_structure_use_cpds",
+    "default_pro_mode_structure_canny_stop": "pro_mode_structure_canny_stop",
+    "default_pro_mode_structure_canny_weight": "pro_mode_structure_canny_weight",
+    "default_pro_mode_structure_cpds_stop": "pro_mode_structure_cpds_stop",
+    "default_pro_mode_structure_cpds_weight": "pro_mode_structure_cpds_weight",
     "default_prompt": "prompt",
     "default_prompt_negative": "negative_prompt",
     "default_styles": "styles",

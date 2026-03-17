@@ -69,9 +69,22 @@ Use this checklist:
 - scores candidates by detail/contrast/exposure/entropy proxies
 - keeps only the top results (`default_pro_mode_keep_count = 2`)
 - runs automatic local detail passes for `face`, `hand`, and `body` using SAM masks + inpaint
+- runs automatic structure control during enhance passes using ControlNet Canny + CPDS from the current image
 - stores only final enhanced outputs by default to reduce noisy intermediate picks
 
 This is an approximation-based scorer, not a semantic human judge, but it usually removes the weakest outputs automatically.
+
+### Pro structure-control tuning
+
+`realistic_pro` now includes a stage-3 structure pass to stabilize anatomy/silhouette while enhancing:
+
+- `default_pro_mode_structure_control_enabled`
+- `default_pro_mode_structure_use_canny`
+- `default_pro_mode_structure_use_cpds`
+- `default_pro_mode_structure_canny_stop / weight`
+- `default_pro_mode_structure_cpds_stop / weight`
+
+If output becomes too rigid, reduce structure weights slightly (`-0.05` to `-0.15`) or disable one branch (`canny` or `cpds`).
 
 ## Practical limits
 

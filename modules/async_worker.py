@@ -70,6 +70,13 @@ class AsyncTask:
         self.pro_mode_detail_strength = modules.config.default_pro_mode_detail_strength
         self.pro_mode_detail_respective_field = modules.config.default_pro_mode_detail_respective_field
         self.pro_mode_detail_erode_or_dilate = modules.config.default_pro_mode_detail_erode_or_dilate
+        self.pro_mode_structure_control_enabled = modules.config.default_pro_mode_structure_control_enabled
+        self.pro_mode_structure_use_canny = modules.config.default_pro_mode_structure_use_canny
+        self.pro_mode_structure_use_cpds = modules.config.default_pro_mode_structure_use_cpds
+        self.pro_mode_structure_canny_stop = modules.config.default_pro_mode_structure_canny_stop
+        self.pro_mode_structure_canny_weight = modules.config.default_pro_mode_structure_canny_weight
+        self.pro_mode_structure_cpds_stop = modules.config.default_pro_mode_structure_cpds_stop
+        self.pro_mode_structure_cpds_weight = modules.config.default_pro_mode_structure_cpds_weight
         self.output_format = args.pop()
         self.seed = int(args.pop())
         self.read_wildcards_in_order = args.pop()
@@ -385,6 +392,24 @@ def worker():
             f'respective={async_task.pro_mode_detail_respective_field}'
         )
         return
+
+    def prepare_pro_mode_structure_control(async_task, controlnet_canny_path, controlnet_cpds_path):
+        if not async_task.pro_mode_enabled or not async_task.pro_mode_structure_control_enabled:
+            return controlnet_canny_path, controlnet_cpds_path
+
+        if async_task.pro_mode_structure_use_canny and controlnet_canny_path is None:
+            controlnet_canny_path = modules.config.downloading_controlnet_canny()
+        if async_task.pro_mode_structure_use_cpds and controlnet_cpds_path is None:
+            controlnet_cpds_path = modules.config.downloading_controlnet_cpds()
+
+        print(
+            f'[Pro Mode] Structure control enabled: '
+            f'canny={async_task.pro_mode_structure_use_canny} '
+            f'(stop={async_task.pro_mode_structure_canny_stop}, weight={async_task.pro_mode_structure_canny_weight}), '
+            f'cpds={async_task.pro_mode_structure_use_cpds} '
+            f'(stop={async_task.pro_mode_structure_cpds_stop}, weight={async_task.pro_mode_structure_cpds_weight})'
+        )
+        return controlnet_canny_path, controlnet_cpds_path
 
     def process_task(all_steps, async_task, callback, controlnet_canny_path, controlnet_cpds_path, current_task_id,
                      denoising_strength, final_scheduler_name, goals, initial_latent, steps, switch, positive_cond,
@@ -1072,6 +1097,7 @@ def worker():
         print(f'Processing time (total): {processing_time:.2f} seconds')
 
     def process_enhance(all_steps, async_task, callback, controlnet_canny_path, controlnet_cpds_path,
+                        ip_adapter_face_path, ip_adapter_path,
                         current_progress, current_task_id, denoising_strength, inpaint_disable_initial_latent,
                         inpaint_engine, inpaint_respective_field, inpaint_strength,
                         prompt, negative_prompt, final_scheduler_name, goals, height, img, mask,
@@ -1114,9 +1140,32 @@ def worker():
             async_task, prompt, negative_prompt, base_model_additional_loras, 1, True,
             use_expansion, use_style, use_synthetic_refiner, current_progress)
         task_enhance = tasks_enhance[0]
-        # TODO could support vary, upscale and CN in the future
-        # if 'cn' in goals:
-        #     apply_control_nets(async_task, height, ip_adapter_face_path, ip_adapter_path, width)
+        goals_enhance = list(goals)
+        injected_canny = 0
+        injected_cpds = 0
+
+        if async_task.pro_mode_enabled and async_task.pro_mode_structure_control_enabled:
+            structure_source = HWC3(img)
+            if async_task.pro_mode_structure_use_canny and controlnet_canny_path is not None:
+                async_task.cn_tasks[flags.cn_canny].append([
+                    np.ascontiguousarray(structure_source.copy()),
+                    float(async_task.pro_mode_structure_canny_stop),
+                    float(async_task.pro_mode_structure_canny_weight)
+                ])
+                injected_canny = 1
+            if async_task.pro_mode_structure_use_cpds and controlnet_cpds_path is not None:
+                async_task.cn_tasks[flags.cn_cpds].append([
+                    np.ascontiguousarray(structure_source.copy()),
+                    float(async_task.pro_mode_structure_cpds_stop),
+                    float(async_task.pro_mode_structure_cpds_weight)
+                ])
+                injected_cpds = 1
+
+            if injected_canny + injected_cpds > 0:
+                if 'cn' not in goals_enhance:
+                    goals_enhance.append('cn')
+                apply_control_nets(async_task, height, ip_adapter_face_path, ip_adapter_path, width, current_progress)
+
         if async_task.freeu_enabled:
             apply_freeu(async_task)
         patch_samplers(async_task)
@@ -1126,18 +1175,25 @@ def worker():
                 inpaint_parameterized, inpaint_strength,
                 inpaint_respective_field, switch, inpaint_disable_initial_latent,
                 current_progress, True)
-        imgs, img_paths, current_progress = process_task(all_steps, async_task, callback, controlnet_canny_path,
-                                                         controlnet_cpds_path, current_task_id, denoising_strength,
-                                                         final_scheduler_name, goals, initial_latent, steps, switch,
-                                                         task_enhance['c'], task_enhance['uc'], task_enhance, loras,
-                                                         tiled, use_expansion, width, height, current_progress,
-                                                         preparation_steps, total_count, show_intermediate_results,
-                                                         persist_image)
+        try:
+            imgs, img_paths, current_progress = process_task(all_steps, async_task, callback, controlnet_canny_path,
+                                                             controlnet_cpds_path, current_task_id, denoising_strength,
+                                                             final_scheduler_name, goals_enhance, initial_latent, steps,
+                                                             switch, task_enhance['c'], task_enhance['uc'], task_enhance,
+                                                             loras, tiled, use_expansion, width, height, current_progress,
+                                                             preparation_steps, total_count, show_intermediate_results,
+                                                             persist_image)
+        finally:
+            if injected_canny > 0:
+                del async_task.cn_tasks[flags.cn_canny][-injected_canny:]
+            if injected_cpds > 0:
+                del async_task.cn_tasks[flags.cn_cpds][-injected_cpds:]
 
         del task_enhance['c'], task_enhance['uc']  # Save memory
         return current_progress, imgs[0], prompt, negative_prompt
 
     def enhance_upscale(all_steps, async_task, base_progress, callback, controlnet_canny_path, controlnet_cpds_path,
+                        ip_adapter_face_path, ip_adapter_path,
                         current_task_id, denoising_strength, done_steps_inpainting, done_steps_upscaling, enhance_steps,
                         prompt, negative_prompt, final_scheduler_name, height, img, preparation_steps, switch, tiled,
                         total_count, use_expansion, use_style, use_synthetic_refiner, width, persist_image=True):
@@ -1154,8 +1210,8 @@ def worker():
         if len(goals_enhance) > 0:
             try:
                 current_progress, img, prompt, negative_prompt = process_enhance(
-                    all_steps, async_task, callback, controlnet_canny_path,
-                    controlnet_cpds_path, current_progress, current_task_id, denoising_strength, False,
+                    all_steps, async_task, callback, controlnet_canny_path, controlnet_cpds_path,
+                    ip_adapter_face_path, ip_adapter_path, current_progress, current_task_id, denoising_strength, False,
                     'None', 0.0, 0.0, prompt, negative_prompt, final_scheduler_name,
                     goals_enhance, height, img, None, preparation_steps, steps, switch, tiled, total_count,
                     use_expansion, use_style, use_synthetic_refiner, width, persist_image=persist_image)
@@ -1250,6 +1306,10 @@ def worker():
                 async_task, base_model_additional_loras, clip_vision_path, controlnet_canny_path, controlnet_cpds_path,
                 goals, inpaint_head_model_path, inpaint_image, inpaint_mask, inpaint_parameterized, ip_adapter_face_path,
                 ip_adapter_path, ip_negative_path, skip_prompt_processing, use_synthetic_refiner)
+
+        controlnet_canny_path, controlnet_cpds_path = prepare_pro_mode_structure_control(
+            async_task, controlnet_canny_path, controlnet_cpds_path
+        )
 
         # Load or unload CNs
         progressbar(async_task, current_progress, 'Loading control models ...')
@@ -1454,6 +1514,7 @@ def worker():
                 persist_image = not async_task.save_final_enhanced_image_only or active_enhance_tabs == 0
                 current_task_id, done_steps_inpainting, done_steps_upscaling, img, exception_result = enhance_upscale(
                     all_steps, async_task, base_progress, callback, controlnet_canny_path, controlnet_cpds_path,
+                    ip_adapter_face_path, ip_adapter_path,
                     current_task_id, denoising_strength, done_steps_inpainting, done_steps_upscaling, enhance_steps,
                     async_task.prompt, async_task.negative_prompt, final_scheduler_name, height, img, preparation_steps,
                     switch, tiled, total_count, use_expansion, use_style, use_synthetic_refiner, width, persist_image)
@@ -1521,6 +1582,7 @@ def worker():
                 try:
                     current_progress, img, enhance_prompt_processed, enhance_negative_prompt_processed = process_enhance(
                         all_steps, async_task, callback, controlnet_canny_path, controlnet_cpds_path,
+                        ip_adapter_face_path, ip_adapter_path,
                         current_progress, current_task_id, denoising_strength, enhance_inpaint_disable_initial_latent,
                         enhance_inpaint_engine, enhance_inpaint_respective_field, enhance_inpaint_strength,
                         enhance_prompt, enhance_negative_prompt, final_scheduler_name, goals_enhance, height, img, mask,
@@ -1559,6 +1621,7 @@ def worker():
                 persist_image = True
                 current_task_id, done_steps_inpainting, done_steps_upscaling, img, exception_result = enhance_upscale(
                     all_steps, async_task, base_progress, callback, controlnet_canny_path, controlnet_cpds_path,
+                    ip_adapter_face_path, ip_adapter_path,
                     current_task_id, denoising_strength, done_steps_inpainting, done_steps_upscaling, enhance_steps,
                     last_enhance_prompt, last_enhance_negative_prompt, final_scheduler_name, height, img,
                     preparation_steps, switch, tiled, total_count, use_expansion, use_style, use_synthetic_refiner,
