@@ -261,6 +261,9 @@ def worker():
         if not isinstance(imgs, list):
             imgs = [imgs]
 
+        if args_manager.args.disable_censor:
+            censor = False
+
         if censor and (modules.config.default_black_out_nsfw or black_out_nsfw):
             progressbar(async_task, progressbar_index, 'Checking for NSFW content ...')
             imgs = default_censor(imgs)

@@ -708,6 +708,122 @@ with shared.gradio_root:
 
                 with gr.Row():
                     refresh_files = gr.Button(label='Refresh', value='\U0001f504 Refresh All Files', variant='secondary', elem_classes='refresh_button')
+
+            if args_manager.args.enable_chat_ua:
+                from modules.chat_ua import plan_from_chat
+
+                with gr.Tab(label='Chat (UA)'):
+                    gr.Markdown(
+                        "Український чат-асистент: формує план і може застосувати його до полів генерації."
+                    )
+                    chat_state = gr.State([])  # list[(user, assistant)]
+                    chat_box = gr.Chatbot(label="Чат", height=360)
+                    chat_input = gr.Textbox(
+                        label="Повідомлення",
+                        placeholder="Опиши, що треба згенерувати…",
+                        lines=3,
+                    )
+
+                    with gr.Row():
+                        chat_send = gr.Button(value="Надіслати")
+                        chat_apply = gr.Button(value="Застосувати до генерації", variant="secondary")
+
+                    plan_preview = gr.JSON(label="План (JSON)", value={})
+                    plan_notes = gr.Markdown(value="")
+
+                    def _chat_send(history, msg):
+                        msg = (msg or "").strip()
+                        if not msg:
+                            return history, history, "", {}, ""
+                        plan = plan_from_chat(history, msg)
+                        assistant = plan.notes or f"intent={plan.intent}"
+                        new_history = history + [(msg, assistant)]
+                        plan_dict = {
+                            "intent": plan.intent,
+                            "prompt": plan.prompt,
+                            "negative": plan.negative,
+                            "preset": plan.preset,
+                            "notes": plan.notes,
+                        }
+                        notes_md = plan.notes if plan.notes else ""
+                        return new_history, new_history, "", plan_dict, notes_md
+
+                    def _chat_apply(plan_dict):
+                        if not isinstance(plan_dict, dict):
+                            return gr.update(), gr.update(), gr.update()
+                        preset_value = str(plan_dict.get("preset", "initial") or "initial")
+                        if args_manager.args.disable_preset_selection:
+                            preset_value = None
+                        return (
+                            gr.update(value=str(plan_dict.get("prompt", "") or "")),
+                            gr.update(value=str(plan_dict.get("negative", "") or "")),
+                            gr.update(value=preset_value) if preset_value is not None else gr.update(),
+                        )
+
+                    chat_send.click(
+                        _chat_send,
+                        inputs=[chat_state, chat_input],
+                        outputs=[chat_state, chat_box, chat_input, plan_preview, plan_notes],
+                        queue=True,
+                    )
+
+                    if not args_manager.args.disable_preset_selection:
+                        chat_apply.click(
+                            _chat_apply,
+                            inputs=[plan_preview],
+                            outputs=[prompt, negative_prompt, preset_selection],
+                            queue=False,
+                        )
+                    else:
+                        chat_apply.click(
+                            lambda plan_dict: _chat_apply(plan_dict)[:2],
+                            inputs=[plan_preview],
+                            outputs=[prompt, negative_prompt],
+                            queue=False,
+                        )
+
+            if args_manager.args.enable_wan_i2v:
+                from modules.wan_i2v import generate_video as wan_generate_video
+
+                with gr.Tab(label='Video (I2V)'):
+                    gr.Markdown(
+                        "Image → Video (Wan I2V). Потрібно запускати з `--wan-model-id <hf_model>`.\n\n"
+                        "Примітка: NSFW/Adult LoRA репозиторії заблоковані."
+                    )
+                    wan_image = gr.Image(type="pil", label="Вхідне зображення", height=320)
+                    wan_prompt = gr.Textbox(label="Prompt", lines=3, placeholder="Опис руху/сцени…")
+                    wan_negative = gr.Textbox(
+                        label="Negative",
+                        lines=2,
+                        value="low quality, worst quality, blurry, distorted, deformed",
+                    )
+                    with gr.Row():
+                        wan_steps = gr.Slider(1, 30, value=6, step=1, label="Steps")
+                        wan_duration = gr.Slider(0.5, 10.0, value=3.5, step=0.5, label="Duration (s)")
+                    with gr.Row():
+                        wan_cfg = gr.Slider(0.0, 10.0, value=1.0, step=0.5, label="Guidance")
+                        wan_cfg2 = gr.Slider(0.0, 10.0, value=1.0, step=0.5, label="Guidance 2")
+                    with gr.Row():
+                        wan_seed = gr.Slider(0, constants.MAX_SEED, value=42, step=1, label="Seed")
+                        wan_go = gr.Button(value="Generate Video", variant="primary")
+
+                    wan_out = gr.Video(label="Відео", autoplay=True, height=360)
+
+                    wan_go.click(
+                        fn=wan_generate_video,
+                        inputs=[
+                            wan_image,
+                            wan_prompt,
+                            wan_negative,
+                            wan_steps,
+                            wan_duration,
+                            wan_cfg,
+                            wan_cfg2,
+                            wan_seed,
+                        ],
+                        outputs=[wan_out],
+                        queue=True,
+                    )
             with gr.Tab(label='Advanced'):
                 guidance_scale = gr.Slider(label='Guidance Scale', minimum=1.0, maximum=30.0, step=0.01,
                                            value=modules.config.default_cfg_scale,
@@ -785,8 +901,8 @@ with shared.gradio_root:
                                                              value=False)
                         read_wildcards_in_order = gr.Checkbox(label="Read wildcards in order", value=False)
 
-                        black_out_nsfw = gr.Checkbox(label='Black Out NSFW', value=modules.config.default_black_out_nsfw,
-                                                     interactive=not modules.config.default_black_out_nsfw,
+                        black_out_nsfw = gr.Checkbox(label='Black Out NSFW', value=modules.config.default_black_out_nsfw and (not args_manager.args.disable_censor),
+                                                     interactive=(not modules.config.default_black_out_nsfw) and (not args_manager.args.disable_censor),
                                                      info='Use black image if NSFW is detected.')
 
                         black_out_nsfw.change(lambda x: gr.update(value=x, interactive=not x),
@@ -1140,7 +1256,8 @@ def dump_default_english_config():
 
 # dump_default_english_config()
 
-shared.gradio_root.launch(
+# Gradio prints URLs, but we also echo them in a single, easy-to-copy line.
+_launch_result = shared.gradio_root.launch(
     inbrowser=args_manager.args.in_browser,
     server_name=args_manager.args.listen,
     server_port=args_manager.args.port,
@@ -1149,3 +1266,17 @@ shared.gradio_root.launch(
     allowed_paths=[modules.config.path_outputs],
     blocked_paths=[constants.AUTH_FILENAME]
 )
+
+_local_url = None
+_share_url = None
+try:
+    # gradio==3.41.2 returns (app, local_url, share_url)
+    _local_url = _launch_result[1] if len(_launch_result) > 1 else None
+    _share_url = _launch_result[2] if len(_launch_result) > 2 else None
+except Exception:
+    pass
+
+if isinstance(_local_url, str) and _local_url:
+    print(f'[UI] Local: {_local_url}')
+if isinstance(_share_url, str) and _share_url:
+    print(f'[UI] Share: {_share_url}')

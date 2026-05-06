@@ -1,0 +1,82 @@
+{
+  "default_model": "realisticStockPhoto_v20.safetensors",
+  "default_refiner": "None",
+  "default_refiner_switch": 0.5,
+  "default_loras": [
+    [
+      true,
+      "SDXL_FILM_PHOTOGRAPHY_STYLE_V1.safetensors",
+      0.12
+    ],
+    [
+      true,
+      "dynamic_anatomy.safetensors",
+      1.6
+    ],
+    [
+      true,
+      "perfect_hands_v2.safetensors",
+      0.7
+    ],
+    [
+      true,
+      "add_detail_xl.safetensors",
+      0.25
+    ],
+    [
+      true,
+      "None",
+      1.0
+    ]
+  ],
+  "default_cfg_scale": 3.6,
+  "default_sample_sharpness": 1.0,
+  "default_sampler": "dpmpp_2m_sde_gpu",
+  "default_scheduler": "karras",
+  "default_performance": "Quality",
+  "default_prompt": "",
+  "default_prompt_negative": "lowres, blurry, cgi, render, plastic skin, waxy skin, watermark, text, signature, bad anatomy, deformed, extra limbs, extra fingers, fused fingers",
+  "default_styles": [
+    "Fooocus Photograph",
+    "Fooocus Negative"
+  ],
+  "default_aspect_ratio": "1024*1024",
+  "default_overwrite_step": 58,
+  "default_image_number": 1,
+  "default_black_out_nsfw": false,
+  "default_pro_mode_enabled": true,
+  "default_pro_mode_keep_count": 0,
+  "default_pro_mode_min_images": 4,
+  "default_pro_mode_detail_pass_enabled": true,
+  "default_pro_mode_detail_prompts": [
+    "face",
+    "eyes",
+    "hand",
+    "body"
+  ],
+  "default_pro_mode_detail_inpaint_engine": "v2.6",
+  "default_pro_mode_detail_strength": 0.24,
+  "default_pro_mode_detail_respective_field": 0.3,
+  "default_pro_mode_detail_erode_or_dilate": 0,
+  "default_pro_mode_structure_control_enabled": true,
+  "default_pro_mode_structure_use_canny": true,
+  "default_pro_mode_structure_use_cpds": true,
+  "default_pro_mode_structure_canny_stop": 0.32,
+  "default_pro_mode_structure_canny_weight": 0.22,
+  "default_pro_mode_structure_cpds_stop": 0.32,
+  "default_pro_mode_structure_cpds_weight": 0.18,
+  "checkpoint_downloads": {
+    "realisticStockPhoto_v20.safetensors": "https://huggingface.co/lllyasviel/fav_models/resolve/main/fav/realisticStockPhoto_v20.safetensors"
+  },
+  "embeddings_downloads": {},
+  "lora_downloads": {
+    "SDXL_FILM_PHOTOGRAPHY_STYLE_V1.safetensors": "https://huggingface.co/mashb1t/fav_models/resolve/main/fav/SDXL_FILM_PHOTOGRAPHY_STYLE_V1.safetensors",
+    "dynamic_anatomy.safetensors": "https://huggingface.co/ntc-ai/SDXL-LoRA-slider.dynamic-anatomy/resolve/main/dynamic%20anatomy.safetensors",
+    "perfect_hands_v2.safetensors": "https://huggingface.co/Kentus/XL_Loras/resolve/main/Perfect%20Hands%20v2.safetensors",
+    "add_detail_xl.safetensors": "https://huggingface.co/shauray/sdxl_loras/resolve/main/add-detail-xl.safetensors"
+  },
+  "previous_default_models": [
+    "juggernautXL_v8Rundiffusion.safetensors"
+  ]
+}
+

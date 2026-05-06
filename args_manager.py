@@ -25,6 +25,21 @@ args_parser.parser.add_argument("--disable-analytics", action='store_true',
 args_parser.parser.add_argument("--disable-metadata", action='store_true',
                                 help="Disables saving metadata to images.")
 
+args_parser.parser.add_argument("--disable-censor", action='store_true',
+                                help="Disables the NSFW safety checker (no blur/blackout).")
+
+args_parser.parser.add_argument("--enable-chat-ua", action='store_true',
+                                help="Enable local Ukrainian chat assistant that can apply settings to generation.")
+args_parser.parser.add_argument("--chat-ua-model", type=str, default="Qwen/Qwen2.5-0.5B-Instruct",
+                                help="Hugging Face model id for the Ukrainian chat assistant.")
+
+args_parser.parser.add_argument("--enable-wan-i2v", action='store_true',
+                                help="Enable Wan image-to-video tab (runs in-process).")
+args_parser.parser.add_argument("--wan-model-id", type=str, default="",
+                                help="Hugging Face model id for Wan I2V pipeline (Diffusers).")
+args_parser.parser.add_argument("--wan-lora-id", type=str, default="",
+                                help="Optional Hugging Face LoRA repo/id for Wan I2V (non-NSFW only).")
+
 args_parser.parser.add_argument("--disable-preset-download", action='store_true',
                                 help="Disables downloading models for presets", default=False)
 
