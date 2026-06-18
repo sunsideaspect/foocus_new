@@ -4,6 +4,16 @@
 
 # Fooocus
 
+## sunsideaspect fork — Open in Colab
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/sunsideaspect/foocus_new/blob/main/fooocus_colab.ipynb)
+
+1. Runtime → Change runtime type → **GPU**
+2. **Run all**
+3. Open the printed link **`✅ Open this URL`**
+
+NSFW safety checker is disabled (`--disable-censor`). Default preset: `realistic_hyper_stable`.
+
 [>>> Click Here to Install Fooocus <<<](#download)
 
 Fooocus is an image generating software (based on [Gradio](https://www.gradio.app/) <a href='https://github.com/gradio-app/gradio'><img src='https://img.shields.io/github/stars/gradio-app/gradio'></a>).
@@ -114,8 +124,7 @@ See also the common problems and troubleshoots [here](troubleshoot.md).
 | Colab | Info
 | --- | --- |
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lllyasviel/Fooocus/blob/main/fooocus_colab.ipynb) | Fooocus Official
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/sunsideaspect/foocus_new/blob/cursor/git-eaf0/fooocus_colab.ipynb) | This fork (hyper-stable preset by default)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/sunsideaspect/foocus_new/blob/cursor/git-eaf0/fooocus_colab_easy.ipynb) | This fork Easy (one-click proxy, hyper-stable preset)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/sunsideaspect/foocus_new/blob/main/fooocus_colab.ipynb) | This fork (proxy URL, hyper-stable preset, no censor)
 
 In Colab, you can modify the last line to `!python entry_with_update.py --share --always-high-vram` or `!python entry_with_update.py --share --always-high-vram --preset anime` or `!python entry_with_update.py --share --always-high-vram --preset realistic` for Fooocus Default/Anime/Realistic Edition.
 The full fork notebook starts with `--preset realistic_hyper_stable`.

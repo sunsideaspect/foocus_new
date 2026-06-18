@@ -257,6 +257,11 @@ def worker():
         print(f'[Fooocus] {text}')
         async_task.yields.append(['preview', (number, text, None)])
 
+    def should_censor(black_out_nsfw):
+        if args_manager.args.disable_censor:
+            return False
+        return modules.config.default_black_out_nsfw or black_out_nsfw
+
     def yield_result(async_task, imgs, progressbar_index, black_out_nsfw, censor=True, do_not_show_finished_images=False):
         if not isinstance(imgs, list):
             imgs = [imgs]
@@ -264,7 +269,7 @@ def worker():
         if args_manager.args.disable_censor:
             censor = False
 
-        if censor and (modules.config.default_black_out_nsfw or black_out_nsfw):
+        if censor and should_censor(black_out_nsfw):
             progressbar(async_task, progressbar_index, 'Checking for NSFW content ...')
             imgs = default_censor(imgs)
 
@@ -451,7 +456,7 @@ def worker():
         if inpaint_worker.current_task is not None:
             imgs = [inpaint_worker.current_task.post_process(x) for x in imgs]
         current_progress = int(base_progress + (100 - preparation_steps) / float(all_steps) * steps)
-        if modules.config.default_black_out_nsfw or async_task.black_out_nsfw:
+        if should_censor(async_task.black_out_nsfw):
             progressbar(async_task, current_progress, 'Checking for NSFW content ...')
             imgs = default_censor(imgs)
         progressbar(async_task, current_progress, f'Saving image {current_task_id + 1}/{total_count} to system ...')
@@ -1122,7 +1127,7 @@ def worker():
                 async_task, img, async_task.enhance_uov_method, switch, current_progress)
             if direct_return:
                 d = [('Upscale (Fast)', 'upscale_fast', '2x')]
-                if modules.config.default_black_out_nsfw or async_task.black_out_nsfw:
+                if should_censor(async_task.black_out_nsfw):
                     progressbar(async_task, current_progress, 'Checking for NSFW content ...')
                     img = default_censor(img)
                 progressbar(async_task, current_progress, f'Saving image {current_task_id + 1}/{total_count} to system ...')
@@ -1352,7 +1357,7 @@ def worker():
                 advance_progress=True)
             if direct_return:
                 d = [('Upscale (Fast)', 'upscale_fast', '2x')]
-                if modules.config.default_black_out_nsfw or async_task.black_out_nsfw:
+                if should_censor(async_task.black_out_nsfw):
                     progressbar(async_task, 100, 'Checking for NSFW content ...')
                     async_task.uov_input_image = default_censor(async_task.uov_input_image)
                 progressbar(async_task, 100, 'Saving image to system ...')
