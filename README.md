@@ -35,7 +35,6 @@ python launch.py --preset realistic_juggernaut_ragnarok --disable-censor --disab
 
 ## Презентація
 
-- [PRESENTATION_PM_UA.md](docs/PRESENTATION_PM_UA.md)
 - [fooocus-pro-presentation.html](docs/fooocus-pro-presentation.html)
 
 ## Ліцензія
